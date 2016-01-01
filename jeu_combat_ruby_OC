@@ -1,4 +1,4 @@
-#JEU DE COMBAT DANS LA CONSOLE
+#JEU DE COMBAT DANS LA CONSOLE - TP OPEN CLASSROOMS
 
 class Personne
   attr_accessor :nom, :points_de_vie, :en_vie
@@ -18,19 +18,24 @@ class Personne
   end
   
   def attaque(personne)
+  # Le joueur attaque la personne passée en paramètre
     puts "#{@nom} attaque #{personne.nom}"
+  
+    if personne.en_vie
+    	personne.subit_attaque(degats)
+    else
+    	puts "#{personne.nom} a déjà été vaincu"
+    end
   end
   
+  
   def subit_attaque(degats_recus)
-    @points_de_vie -= degats_recus.to_i
-    puts "#{@nom} subit #{degats_recus} points de dégâts"
-    if @points_de_vie > 0
-    	@en_vie 	
-    else
-    	@en_vie = false
-    end
-    
-end
+  # Le joueur attaqué perd des points de vie en fonction des dégâts reçus
+    @points_de_vie -= degats_recus
+    puts "#{nom} vient de subir #{degats_recus} points de dégâts"
+  # On vérifie si la personne attaquée est toujours en vie
+    puts "#{@nom} a été vaincu" if @points_de_vie <= 0 
+  end
    
 end
 
@@ -46,27 +51,30 @@ class Joueur < Personne
   end
   
   def degats
-    degats = 100 - @points_de_vie
-    puts "#{@nom} a subi #{degats} points de dégâts"
+  # Les dégâts sont variables à chaque attaque
+    degats = rand(1..20) + degats_bonus
+    puts "#{@nom} inflige #{degats} points de dégâts"
+    return degats
   end
   
   def soin
-    @points_de_vie += 25
-    puts "#{@nom} s'est soigné et a gagné 25 points de vie"
+    @points_de_vie += rand(10..25)
+    puts "#{@nom} s'est soigné et a gagné #{points_de_vie} points de vie"
   end
   
   def ameliorer_degats
-    @degats_bonus += 25
-    puts "#{@nom} bénéficie de 25 points de dégâts-bonus supplémentaires"
+  # Si le joueur améliore son attaque, il recharge ses dégâts-bonus
+    @degats_bonus += rand(25)
+    puts "#{@nom} bénéficie de #{@degats_bonus} points de dégâts-bonus supplémentaires"
 end
 end
 
 class Ennemi < Personne
 
   def degats
-    # A faire:
-    # - Calculer les dégats
-    degats = 100 - @points_de_vie
+    degats = rand(1..30)
+    puts "#{@nom} a provoqué #{degats} points de dégâts"
+    return degats
   end
   
 end
@@ -90,9 +98,8 @@ class Jeu
   end
   
   def self.est_fini(joueur, monde)
-    # A faire:
-    # - Déterminer la condition de fin du jeu
-    self.est_fini(joueur,monde) == true if joueur.en_vie.nil?
+  # Le jeu est fini si le joueur est vaincu ou s'il n'y a plus d'ennemis à vaincre
+    return true if joueur.points_de_vie <=0 || monde.ennemis_en_vie.size <= 0
   end
   
 end
@@ -102,7 +109,8 @@ class Monde
   attr_accessor :ennemis
 
   def ennemis_en_vie
-    return ennemis unless ennemis.nil?
+ # On n'affiche que les ennemis encore en vie
+    ennemis.select {|ennemi| ennemi.en_vie }
   end
 end
 
@@ -144,14 +152,17 @@ puts "\n\nAinsi débutent les aventures de #{joueur.nom}\n\n"
   elsif choix == 99
     # On quitte la boucle de jeu si on a choisi
     # 99 qui veut dire "quitter"
+    puts "Vous avez choisi de quitter la partie. A une prochaine fois!"
     break
+  elsif choix >= 5 && choix < 99
+  	puts "Ce choix n'existe pas."
+  	Jeu.actions_possibles(monde)
   else
     # Choix - 2 car nous avons commencé à compter à partir de 2
     # car les choix 0 et 1 étaient réservés pour le soin et
     # l'amélioration d'attaque
     ennemi_a_attaquer = monde.ennemis[choix - 2]
     joueur.attaque(ennemi_a_attaquer)
-    ennemi_a_attaquer.subit_attaque(rand(1..20))
   end
 
   puts "\nLES ENNEMIS RIPOSTENT !"
@@ -159,13 +170,12 @@ puts "\n\nAinsi débutent les aventures de #{joueur.nom}\n\n"
   monde.ennemis_en_vie.each do |ennemi|
     # ... le héros subit une attaque.
     ennemi.attaque(joueur)
-    joueur.subit_attaque(rand(1..20))
   end
   
   puts "\nEtat du héros: #{joueur.info}\n"
   
 # Si le jeu est fini, on interrompt la boucle
-  break if Jeu.est_fini(joueur, monde) || joueur.points_de_vie <= 0 
+  break if Jeu.est_fini(joueur, monde)  
 end
 
 puts "\nGame Over!\n"
@@ -176,12 +186,6 @@ puts "Le résultat de la partie est :
 #{monde.ennemis[1].info} \n
 #{monde.ennemis[2].info} "
 
-
-if joueur.en_vie
-  puts "Vous avez gagné !"
-else
-  puts "Vous avez perdu !"
-end
 
 
 
